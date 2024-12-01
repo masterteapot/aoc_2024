@@ -1,0 +1,4 @@
+(test 
+  (name test) 
+  (libraries aoc_2024 ounit2 batteries)
+)
