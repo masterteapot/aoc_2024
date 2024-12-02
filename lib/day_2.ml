@@ -9,16 +9,6 @@ let split_lines ~char txt_lines =
   List.map (fun s -> String.split_on_char char s) txt_lines
 ;;
 
-let find_matches left right =
-  let rec aux counter x = function
-    | [] -> x, counter
-    | hd :: tl when hd = x -> aux (counter + 1) x tl
-    | hd :: tl when hd < x -> aux counter x tl
-    | _ -> x, counter
-  in
-  List.map (fun x -> aux 0 x right) left
-;;
-
 let transform ls =
   let rec aux acc dir = function
     | [] -> acc
@@ -35,7 +25,7 @@ let transform ls =
 ;;
 
 let rec make_range bottom top acc =
-  if bottom = top then acc else make_range bottom (top - 1) ((top - 1) :: acc)
+  if bottom >= top then acc else make_range bottom (top - 1) ((top - 1) :: acc)
 ;;
 
 let print ls = List.iter print_endline ls
@@ -66,13 +56,3 @@ let part_b fname =
   in
   List.fold_left (fun acc x -> if x = true then acc + 1 else acc) 0 trans
 ;;
-
-(* let part_b fname =  *)
-(*     let txt_lines = read_file fname in *)
-(*     let split = split_lines txt_lines in *)
-(*     let nums = get_int_lists split in *)
-(*     let left = fst nums |> List.sort compare in *)
-(*     let right = snd nums |> List.sort compare in *)
-(*     let matches = find_matches left right in *)
-(*     List.fold_left (fun acc (l, r) -> acc + (l * r) ) 0 matches *)
-(* ;; *)
