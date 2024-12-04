@@ -28,11 +28,21 @@ let tests =
           assert_equal
             161
             (Day_3.part_a "/home/jared/Projects/aoc_2024/data/examples/day_3a.txt"))
-       ; ("day 3 part a example"
+       ; ("day 3 part b example"
           >:: fun _ ->
           assert_equal
             48
             (Day_3.part_b "/home/jared/Projects/aoc_2024/data/examples/day_3b.txt"))
+       ; ("day 4 part a example"
+          >:: fun _ ->
+          assert_equal
+            18
+            (Day_4.part_a "/home/jared/Projects/aoc_2024/data/examples/day_3b.txt"))
+       ; ("day 4 part b example"
+          >:: fun _ ->
+          assert_equal
+            9
+            (Day_4.part_b "/home/jared/Projects/aoc_2024/data/examples/day_4b.txt"))
        ]
 ;;
 
