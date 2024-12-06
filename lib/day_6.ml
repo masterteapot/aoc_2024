@@ -153,11 +153,11 @@ let part_a fname =
   let char_ls = List.map Batteries.String.explode raw_inputs in
   let tbl = Hash.create (List.length char_ls * List.length (List.hd char_ls)) in
   parse_map char_ls tbl;
-  List.iter
-    (fun l ->
-       List.iter print_char l;
-       print_newline ())
-    char_ls;
+  (* List.iter *)
+  (*   (fun l -> *)
+  (*      List.iter print_char l; *)
+  (*      print_newline ()) *)
+  (*   char_ls; *)
   let guard = find_guard char_ls in
   run_routes guard tbl;
   (* Hash.iter (fun (x, y) v -> Printf.printf "%d, %d -> %s\n" x y @@ print_locs v) tbl; *)

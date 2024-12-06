@@ -57,9 +57,9 @@ let part_a fname =
   let inputs =
     List.map (String.split_on_char ',') raw_inputs |> List.map (List.map int_of_string)
   in
-  Printf.printf "\ninput length: %d\n" (List.length inputs);
+  (* Printf.printf "\ninput length: %d\n" (List.length inputs); *)
   let output = List.filter (is_valid_instruction g_tbl) inputs in
-  Printf.printf "output length: %d\n\n" (List.length output);
+  (* Printf.printf "output length: %d\n\n" (List.length output); *)
   List.map get_mid_ls output |> List.fold_left ( + ) 0
 ;;
 
@@ -71,9 +71,9 @@ let part_b fname =
   let inputs =
     List.map (String.split_on_char ',') raw_inputs |> List.map (List.map int_of_string)
   in
-  Printf.printf "\ninput length: %d\n" (List.length inputs);
+  (* Printf.printf "\ninput length: %d\n" (List.length inputs); *)
   let unsorted = List.filter (fun x -> not (is_valid_instruction g_tbl x)) inputs in
   let output = List.map (List.sort (sort_instructions g_tbl)) unsorted in
-  Printf.printf "output length: %d\n\n" (List.length output);
+  (* Printf.printf "output length: %d\n\n" (List.length output); *)
   List.map get_mid_ls output |> List.fold_left ( + ) 0
 ;;
