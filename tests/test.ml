@@ -37,12 +37,17 @@ let tests =
           >:: fun _ ->
           assert_equal
             18
-            (Day_4.part_a "/home/jared/Projects/aoc_2024/data/examples/day_3b.txt"))
+            (Day_4.part_a "/home/jared/Projects/aoc_2024/data/examples/day_4a.txt"))
        ; ("day 4 part b example"
           >:: fun _ ->
           assert_equal
             9
             (Day_4.part_b "/home/jared/Projects/aoc_2024/data/examples/day_4b.txt"))
+       ; ("day 5 part a example"
+          >:: fun _ ->
+          assert_equal
+            143
+            (Day_5.part_a "/home/jared/Projects/aoc_2024/data/examples/day_5a.txt"))
        ]
 ;;
 
