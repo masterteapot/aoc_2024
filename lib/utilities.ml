@@ -1,6 +1,11 @@
 let read_file fname = Batteries.File.lines_of fname |> Batteries.List.of_enum
 let sum_int_list ls = List.fold_left ( + ) 0 ls
 
+let clear_screen =
+  print_string "\027[2J\027[H";
+  flush stdout
+;;
+
 let print_type_arr_arr arr inner_printf_str =
   print_endline "[|";
   Array.iter

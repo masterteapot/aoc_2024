@@ -4,13 +4,18 @@ end
 
 type location =
   | Obsticle
-  | Visited of int
+  | Blank
+  | Visited of char
 
 type direction =
   | N
   | S
   | E
   | W
+
+type ways =
+  | Left
+  | Right
 
 type guard =
   { position : int * int
@@ -19,14 +24,21 @@ type guard =
 
 let get_locs = function
   | '#' -> Obsticle
-  | '.' -> Visited 0
-  | '^' | '>' | '<' | 'V' | 'v' -> Visited 0
-  | c -> failwith (Printf.sprintf "get_locs did not expect this char [%c]" c)
+  | _ -> Blank
 ;;
 
 let print_locs = function
   | Obsticle -> "#"
-  | Visited d -> string_of_int d
+  | Blank -> "."
+  | Visited '-' -> "-"
+  | Visited '|' -> "|"
+  | Visited '+' -> "+"
+  | Visited c -> failwith (Printf.sprintf "unexpected print_locs value: %c" c)
+;;
+
+let clear_screen =
+  Printf.printf "\033c";
+  flush stdout
 ;;
 
 let parse_map ls tbl =
@@ -54,9 +66,14 @@ let dir_to_string = function
   | W -> "West"
 ;;
 
-type ways =
-  | Left
-  | Right
+let dir_to_char c = function
+  | N when c = '-' -> '+'
+  | S when c = '-' -> '+'
+  | E when c = '|' -> '+'
+  | W when c = '|' -> '+'
+  | N | S -> '|'
+  | E | W -> '-'
+;;
 
 let find_guard ls =
   let rec aux counter = function
@@ -129,19 +146,57 @@ let print_guard g =
   Printf.printf "(%d, %d -> %s)\n" (fst g.position) (snd g.position) (dir_to_string g.dir)
 ;;
 
-let rec run_routes g tbl =
+let rec print_tbl srted_keys tbl g =
+  match srted_keys with
+  | [] ->
+    print_endline "";
+    print_endline "";
+    flush stdout
+  | ((_, hy) as hd) :: ((_, my) :: _ as ls) when my > hy ->
+    if hd = g.position
+    then (
+      print_string "G";
+      print_endline "";
+      print_tbl ls tbl g)
+    else (
+      print_string @@ print_locs @@ Hash.find tbl hd;
+      print_newline ();
+      print_tbl ls tbl g)
+  | hd :: tl when hd = g.position ->
+    print_string "G";
+    print_tbl tl tbl g
+  | hd :: tl when hd = g.position ->
+    print_string "G";
+    print_tbl tl tbl g
+  | hd :: tl ->
+    print_string @@ print_locs @@ Hash.find tbl hd;
+    flush stdout;
+    print_tbl tl tbl g
+;;
+
+let sort_coords l r =
+  if snd l > snd r
+  then 1
+  else if snd l < snd r
+  then -1
+  else if fst l > fst r
+  then 1
+  else if fst l < fst r
+  then -1
+  else 0
+;;
+
+let rec run_routes srted_keys tbl g =
+  let rec_routes = run_routes srted_keys tbl in
   try
     match Hash.find tbl g.position with
-    | Obsticle -> run_routes (go_back_and_turn g) tbl
-    | Visited _ ->
-      Hash.modify
-        g.position
-        (fun x ->
-           match x with
-           | Visited n -> Visited (n + 1)
-           | _ -> failwith "should have visited")
-        tbl;
-      run_routes (move_guard g) tbl
+    | Obsticle -> rec_routes (go_back_and_turn g)
+    | Blank ->
+      Hash.modify g.position (fun _ -> Visited (dir_to_char '.' g.dir)) tbl;
+      rec_routes (move_guard g)
+    | Visited c ->
+      Hash.modify g.position (fun _ -> Visited (dir_to_char c g.dir)) tbl;
+      rec_routes (move_guard g)
   with
   | _ -> ()
 ;;
@@ -153,18 +208,15 @@ let part_a fname =
   let char_ls = List.map Batteries.String.explode raw_inputs in
   let tbl = Hash.create (List.length char_ls * List.length (List.hd char_ls)) in
   parse_map char_ls tbl;
-  (* List.iter *)
-  (*   (fun l -> *)
-  (*      List.iter print_char l; *)
-  (*      print_newline ()) *)
-  (*   char_ls; *)
   let guard = find_guard char_ls in
-  run_routes guard tbl;
-  (* Hash.iter (fun (x, y) v -> Printf.printf "%d, %d -> %s\n" x y @@ print_locs v) tbl; *)
+  let keys = Hash.keys tbl |> Batteries.List.of_enum in
+  let srted_keys = List.sort sort_coords keys in
+  run_routes srted_keys tbl guard;
+  print_tbl srted_keys tbl guard;
   Hash.fold
     (fun _ v a ->
        match v with
-       | Visited n -> if n > 0 then a + 1 else a
+       | Visited _ -> a + 1
        | _ -> a)
     tbl
     0
