@@ -2,16 +2,16 @@ module Hash = struct
   include Batteries.Hashtbl
 end
 
-type location =
-  | Obsticle
-  | Blank
-  | Visited of char
-
 type direction =
   | N
   | S
   | E
   | W
+
+type location =
+  | Obsticle
+  | Blank
+  | Visited of direction list
 
 type ways =
   | Left
@@ -30,10 +30,9 @@ let get_locs = function
 let print_locs = function
   | Obsticle -> "#"
   | Blank -> "."
-  | Visited '-' -> "-"
-  | Visited '|' -> "|"
-  | Visited '+' -> "+"
-  | Visited c -> failwith (Printf.sprintf "unexpected print_locs value: %c" c)
+  | Visited [ E ] | Visited [ W ] | Visited [ E; W ] | Visited [ W; E ] -> "-"
+  | Visited [ N ] | Visited [ S ] | Visited [ N; S ] | Visited [ S; N ] -> "|"
+  | Visited _ -> "+"
 ;;
 
 let clear_screen =
@@ -64,15 +63,6 @@ let dir_to_string = function
   | E -> "East"
   | S -> "South"
   | W -> "West"
-;;
-
-let dir_to_char c = function
-  | N when c = '-' -> '+'
-  | S when c = '-' -> '+'
-  | E when c = '|' -> '+'
-  | W when c = '|' -> '+'
-  | N | S -> '|'
-  | E | W -> '-'
 ;;
 
 let find_guard ls =
@@ -186,22 +176,76 @@ let sort_coords l r =
   else 0
 ;;
 
-let rec run_routes srted_keys tbl g =
-  let rec_routes = run_routes srted_keys tbl in
+let rec run_routes tbl g =
+  let rec_routes = run_routes tbl in
   try
     match Hash.find tbl g.position with
     | Obsticle -> rec_routes (go_back_and_turn g)
     | Blank ->
-      Hash.modify g.position (fun _ -> Visited (dir_to_char '.' g.dir)) tbl;
+      Hash.modify g.position (fun _ -> Visited [ g.dir ]) tbl;
       rec_routes (move_guard g)
-    | Visited c ->
-      Hash.modify g.position (fun _ -> Visited (dir_to_char c g.dir)) tbl;
+    | Visited l ->
+      Hash.modify g.position (fun _ -> Visited (g.dir :: l)) tbl;
       rec_routes (move_guard g)
   with
   | _ -> ()
 ;;
 
+let rec is_loop tbl g =
+  let rec_routes = is_loop tbl in
+  try
+    match Hash.find tbl g.position with
+    | Obsticle -> rec_routes (go_back_and_turn g)
+    | Blank ->
+      Hash.modify g.position (fun _ -> Visited [ g.dir ]) tbl;
+      rec_routes (move_guard g)
+    | Visited l when List.mem g.dir l -> true
+    | Visited l ->
+      Hash.modify g.position (fun _ -> Visited (g.dir :: l)) tbl;
+      rec_routes (move_guard g)
+  with
+  | _ -> false
+;;
+
+let rec run_routes_v2 tbl g acc =
+  let rec_routes_v2 = run_routes_v2 tbl in
+  try
+    match Hash.find tbl g.position with
+    | Obsticle -> rec_routes_v2 (go_back_and_turn g) acc
+    | Blank ->
+      let tbl_copy = Hash.copy tbl in
+      if
+        Hash.mem tbl (move_guard g).position
+        && Hash.find tbl (move_guard g).position <> Obsticle
+        &&
+        (Hash.modify (move_guard g).position (fun _ -> Obsticle) tbl_copy;
+         is_loop tbl_copy g)
+      then (
+        Hash.modify g.position (fun _ -> Visited [ g.dir ]) tbl;
+        rec_routes_v2 (move_guard g) ((move_guard g).position :: acc))
+      else (
+        Hash.modify g.position (fun _ -> Visited [ g.dir ]) tbl;
+        rec_routes_v2 (move_guard g) acc)
+    | Visited l ->
+      let tbl_copy = Hash.copy tbl in
+      if
+        Hash.mem tbl (move_guard g).position
+        && Hash.find tbl (move_guard g).position <> Obsticle
+        &&
+        (Hash.modify (move_guard g).position (fun _ -> Obsticle) tbl_copy;
+         is_loop tbl_copy g)
+      then (
+        Hash.modify g.position (fun _ -> Visited (g.dir :: l)) tbl;
+        rec_routes_v2 (move_guard g) ((move_guard g).position :: acc))
+      else (
+        Hash.modify g.position (fun _ -> Visited (g.dir :: l)) tbl;
+        rec_routes_v2 (move_guard g) acc)
+  with
+  | _ -> acc
+;;
+
 let read_file fname = Batteries.File.lines_of fname |> Batteries.List.of_enum
+let print_tuple (x, y) = Printf.printf "%d, %d\n" x y
 
 let part_a fname =
   let raw_inputs = read_file fname in
@@ -209,10 +253,11 @@ let part_a fname =
   let tbl = Hash.create (List.length char_ls * List.length (List.hd char_ls)) in
   parse_map char_ls tbl;
   let guard = find_guard char_ls in
-  let keys = Hash.keys tbl |> Batteries.List.of_enum in
-  let srted_keys = List.sort sort_coords keys in
-  run_routes srted_keys tbl guard;
-  print_tbl srted_keys tbl guard;
+  (* let keys = Hash.keys tbl |> Batteries.List.of_enum in *)
+  (* let srted_keys = List.sort sort_coords keys in *)
+  run_routes tbl guard;
+  print_endline "";
+  (* print_tbl srted_keys tbl guard; *)
   Hash.fold
     (fun _ v a ->
        match v with
@@ -222,4 +267,21 @@ let part_a fname =
     0
 ;;
 
-let part_b _ = 0
+let part_b fname =
+  let raw_inputs = read_file fname in
+  let char_ls = List.map Batteries.String.explode raw_inputs in
+  let tbl = Hash.create (List.length char_ls * List.length (List.hd char_ls)) in
+  parse_map char_ls tbl;
+  let guard = find_guard char_ls in
+  (* let keys = Hash.keys tbl |> Batteries.List.of_enum in *)
+  (* let srted_keys = List.sort sort_coords keys in *)
+  let obsticles =
+    run_routes_v2 tbl guard []
+    |> Batteries.List.unique
+    |> List.filter (fun x -> x <> guard.position)
+  in
+  print_endline "";
+  (* print_tbl srted_keys tbl guard; *)
+  (* List.iter print_tuple obsticles; *)
+  List.length obsticles
+;;
