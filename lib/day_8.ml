@@ -134,6 +134,8 @@ let part_a fname =
     0
 ;;
 
+
+(* 2099 is too high; try again *)
 let part_b fname =
   let raw_inputs = read_file fname in
   let char_ls = List.map Batteries.String.explode raw_inputs in
