@@ -1,3 +1,14 @@
+type entry =
+  { old_index : int
+  ; new_index : int
+  ; size : int
+  ; value : int option
+  }
+
+type direction =
+  | Up
+  | Down
+
 let read_file fname = Batteries.File.lines_of fname |> Batteries.List.of_enum
 
 let parse_part_a ls =
@@ -22,43 +33,27 @@ let parse_part_b ls =
   aux [] false 0 ls
 ;;
 
-let rec print_vals = function
-  | 0, _ -> ()
-  | i, None ->
-    print_string "., ";
-    print_vals (i - 1, None)
-  | i, Some x ->
-    Printf.printf "%d, " x;
-    print_vals (i - 1, Some x)
-;;
-
-let nums_to_move num_empty arr =
-  let arr_len = Array.length arr in
-  let rec aux acc index =
-    if List.length acc = num_empty
-    then List.rev acc, arr
+let move_nums arr =
+  let rec aux li hi direction =
+    if li >= hi
+    then ()
     else (
-      match arr.(index) with
-      | None -> aux acc (index - 1)
-      | Some x ->
-        arr.(index) <- None;
-        aux (x :: acc) (index - 1))
+      match direction with
+      | Down ->
+        (match arr.(hi) with
+         | None -> aux li (hi - 1) Down
+         | Some _ -> aux li hi Up)
+      | Up ->
+        (match arr.(li) with
+         | None ->
+           arr.(li) <- arr.(hi);
+           arr.(hi) <- None;
+           aux (li + 1) (hi - 1) Down
+         | Some _ -> aux (li + 1) hi Up))
   in
-  aux [] (arr_len - 1)
+  aux 0 (Array.length arr - 1) Down
 ;;
 
-(* Could also batch finding all nones to make fewer search queries *)
-let rec move_nums num_ls arr =
-  match num_ls with
-  | [] -> arr
-  | hd :: tl ->
-    let i = Batteries.Array.findi (fun x -> x = None) arr in
-    arr.(i) <- Some hd;
-    move_nums tl arr
-;;
-
-
-(* Need to handle the cases when the moved group is smaller than the blanks, need to insert new blank group *)
 let move_nums_v2 arr =
   let indices =
     Batteries.Array.fold_lefti
@@ -78,33 +73,51 @@ let move_nums_v2 arr =
       then Some new_index
       else find_lower_match min_size (new_index + 1) old_index)
   in
-  let rec aux = function
-    | [] -> arr
+  let rec aux acc = function
+    | [] -> acc
     | i :: tl ->
-      let min_size, _ = arr.(i) in
-      (match find_lower_match min_size 0 i with
-       | None -> aux tl
+      let size, v = arr.(i) in
+      (match find_lower_match size 0 i with
+       | None -> aux acc tl
        | Some new_i ->
-         arr.(new_i) <- arr.(i);
-         arr.(i) <- min_size, None;
-         Array.iter print_vals arr;
-         print_newline ();
-         aux tl)
+         let entry = { old_index = i; new_index = new_i; size; value = v } in
+         arr.(new_i) <- fst arr.(new_i) - fst arr.(i), None;
+         arr.(i) <- size, None;
+         aux (entry :: acc) tl)
   in
-  aux indices
+  let rec rebuild i acc mtbl =
+    if i = Array.length arr
+    then List.rev acc
+    else (
+      match arr.(i) with
+      | n, Some v -> rebuild (i + 1) ((n, Some v) :: acc) mtbl
+      | n, None ->
+        let moved =
+          Batteries.Hashtbl.find_all mtbl i
+          |> List.sort (fun l r ->
+            if l.old_index > r.old_index
+            then 1
+            else if l.old_index = r.old_index
+            then 0
+            else -1)
+          |> List.map (fun x -> x.size, x.value)
+        in
+        rebuild (i + 1) ((n, None) :: (moved @ acc)) mtbl)
+  in
+  let mtbl =
+    aux [] indices |> List.map (fun x -> x.new_index, x) |> Batteries.Hashtbl.of_list
+  in
+  rebuild 0 [] mtbl
 ;;
 
-let count_none_below_some num_some arr =
-  let rec aux counter num_none ls =
-    if counter = num_some
-    then num_none
-    else (
-      match ls with
-      | [] -> failwith "something went wrong, list shouldn't be longer than the num none"
-      | None :: tl -> aux (counter + 1) (num_none + 1) tl
-      | _ :: tl -> aux (counter + 1) num_none tl)
+let calculate_p2 ls =
+  let rec aux counter acc = function
+    | [] -> acc
+    | (d, None) :: tl -> aux (counter + d) acc tl
+    | (0, Some _) :: tl -> aux counter acc tl
+    | (d, Some v) :: tl -> aux (counter + 1) (acc + (counter * v)) ((d - 1, Some v) :: tl)
   in
-  aux 0 0 (Batteries.Array.to_list arr)
+  aux 0 0 ls
 ;;
 
 let part_a fname =
@@ -116,21 +129,7 @@ let part_a fname =
     |> List.map int_of_string
   in
   let arr = ls |> parse_part_a |> List.flatten |> Batteries.Array.of_list in
-  let arr_len = Array.length arr in
-  let num_none = Array.fold_left (fun a x -> if x = None then a + 1 else a) 0 arr in
-  let num_some =
-    Array.fold_left
-      (fun a x ->
-         match x with
-         | Some _ -> a + 1
-         | _ -> a)
-      0
-      arr
-  in
-  assert (num_some = arr_len - num_none);
-  let num_none_below_some = count_none_below_some num_some arr in
-  let to_move, arr = nums_to_move num_none_below_some arr in
-  let arr = move_nums to_move arr in
+  move_nums arr;
   let checksum = ref 0 in
   Array.iteri
     (fun i x ->
@@ -150,14 +149,6 @@ let part_b fname =
     |> List.map int_of_string
   in
   let arr = ls |> parse_part_b |> Batteries.Array.of_list in
-  (* let arr_len = Array.length arr in *)
-  let arr = move_nums_v2 arr in
-  let checksum = ref 0 in
-  Array.iteri
-    (fun i (num, x) ->
-       match x with
-       | None -> ()
-       | Some v -> checksum := (i * v * num) + !checksum)
-    arr;
-  !checksum
+  let ls = move_nums_v2 arr in
+  calculate_p2 ls
 ;;
