@@ -28,11 +28,11 @@ let () =
   (* Printf.printf "results: %d\n" (Day_5.part_a "data/inputs/day_5.txt"); *)
   (* print_endline "Part B:"; *)
   (* Printf.printf "results: %d\n" (Day_5.part_b "data/inputs/day_5.txt"); *)
-  print_endline "--- Day 6 ---";
-  print_endline "Part A:";
-  Printf.printf "results: %d\n" (Day_6.part_a "data/inputs/day_6.txt");
-  print_endline "Part B:";
-  Printf.printf "results: %d\n" (Day_6.part_b "data/inputs/day_6.txt");
+  (* print_endline "--- Day 6 ---"; *)
+  (* print_endline "Part A:"; *)
+  (* Printf.printf "results: %d\n" (Day_6.part_a "data/inputs/day_6.txt"); *)
+  (* print_endline "Part B:"; *)
+  (* Printf.printf "results: %d\n" (Day_6.part_b "data/inputs/day_6.txt"); *)
   (* print_endline "--- Day 7 ---"; *)
   (* print_endline "Part A:"; *)
   (* Printf.printf "results: %d\n" (Day_7.part_a "data/inputs/day_7.txt"); *)
@@ -53,4 +53,9 @@ let () =
   (* Printf.printf "results: %d\n" (Day_10.part_a "data/inputs/day_10.txt"); *)
   (* print_endline "Part B:"; *)
   (* Printf.printf "results: %d\n" (Day_10.part_b "data/inputs/day_10.txt") *)
+  print_endline "\n--- Day 11 ---";
+  print_endline "Part A:";
+  Printf.printf "results: %d\n" (Day_11.part_a "data/inputs/day_11.txt");
+  print_endline "Part B:";
+  Printf.printf "results: %d\n" (Day_11.part_b "data/inputs/day_11.txt");
 ;;
