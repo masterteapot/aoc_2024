@@ -58,9 +58,14 @@ let () =
   (* Printf.printf "results: %d\n" (Day_11.part_a "data/inputs/day_11.txt"); *)
   (* print_endline "Part B:"; *)
   (* Printf.printf "results: %d\n" (Day_11.part_b "data/inputs/day_11.txt"); *)
-  print_endline "\n--- Day 12 ---";
+  (*print_endline "\n--- Day 12 ---";*)
   (* print_endline "Part A:"; *)
   (* Printf.printf "results: %d\n" (Day_12.part_a "data/inputs/day_12.txt"); *)
+  (*print_endline "Part B:";*)
+  (*Printf.printf "results: %d\n" (Day_12.part_b "data/examples/day_12b.txt");*)
+  print_endline "\n--- Day 13 ---";
+  print_endline "Part A:";
+  Printf.printf "results: %d\n" (Day_13.part_a "data/inputs/day_13.txt");
   print_endline "Part B:";
-  Printf.printf "results: %d\n" (Day_12.part_b "data/examples/day_12b.txt");
+  Printf.printf "results: %d\n" (Day_13.part_b "data/inputs/day_13.txt")
 ;;
