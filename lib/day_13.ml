@@ -56,12 +56,12 @@ let evaluate (ba, bb, bp) =
   let a_perf = (ba.x + ba.y) / ba.cost in
   let b_perf = (bb.x + bb.y) / bb.cost in
   let rec aux first second num_first num_second =
-    if num_second > 100
-    then None
-    else if
+    if
       (num_first * first.x) + (num_second * second.x) = bp.x
       && (num_first * first.y) + (num_second * second.y) = bp.y
     then Some (num_first, num_second)
+    else if num_second > 100
+    then None
     else if num_first > 100
     then aux first second 0 (num_second + 1)
     else aux first second (num_first + 1) num_second
